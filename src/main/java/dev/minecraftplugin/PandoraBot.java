@@ -2,6 +2,7 @@ package dev.minecraftplugin;
 
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import dev.minecraftplugin.commands.HelpCommand;
 import dev.minecraftplugin.configuration.BotSettings;
 import dev.minecraftplugin.lib.config.Config;
 import dev.minecraftplugin.lib.config.ConfigManager;
@@ -18,7 +19,7 @@ public class PandoraBot {
     private final Config<BotSettings> botConfig;
     private JDA jda;
 
-    public PandoraBot() {
+    public PandoraBot() throws InterruptedException {
         manager = new ConfigManager();
         // Load in our global settings
         botConfig = manager.loadConfig("/data/settings", new BotSettings());
@@ -40,27 +41,46 @@ public class PandoraBot {
             JDABuilder builder = JDABuilder.createDefault(botConfig.getConfiguration().token);
 
 
+            // JDA-Utilities stuff
             CommandClientBuilder commandClientBuilder = new CommandClientBuilder();
             commandClientBuilder.setPrefix(botConfig.getConfiguration().commandPrefix);
             commandClientBuilder.setOwnerId("315146866268569601");
             commandClientBuilder.setCoOwnerIds(botConfig.getConfiguration().admins);
 
-            builder.setActivity(Activity.playing("PandoraPvP"));
-            builder.setStatus(OnlineStatus.ONLINE);
+
+            // Setting the help command.
+            commandClientBuilder.useHelpBuilder(true);
+            commandClientBuilder.setHelpConsumer(new HelpCommand(botConfig));
+
+            // Setting the bots discord status
+            commandClientBuilder.setActivity(Activity.playing("PandoraPvP"));
+            commandClientBuilder.setStatus(OnlineStatus.ONLINE);
+
+            // Setting the bot to auto reconnect if it gets disconnected
             builder.setAutoReconnect(true);
 
+            // This is where we add the JDA-Utilities stuff to jda itself.
             CommandClient client = commandClientBuilder.build();
             builder.addEventListeners(client);
             try {
+                // We try and connect, if it throws an login error there was something wrong with token and as such
+                // We try again.
                 jda = builder.build();
                 successful = true;
             } catch (LoginException e) {
                 e.printStackTrace();
+                // Means invalid token, we should null our token that was saved to allow for it to input another one.
+                if (e.getMessage().trim().equalsIgnoreCase("The provided token is invalid!")) {
+                    botConfig.getConfiguration().token = null;
+                    botConfig.saveConfig();
+                }
+                // We sleep for 1 second before trying to login again
+                Thread.sleep(1000);
             }
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         new PandoraBot();
     }
 
