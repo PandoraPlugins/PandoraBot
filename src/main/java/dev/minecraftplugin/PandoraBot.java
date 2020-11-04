@@ -16,43 +16,51 @@ import java.util.Scanner;
 public class PandoraBot {
     private final ConfigManager manager;
     private final Config<BotSettings> botConfig;
-    private final JDA jda;
+    private JDA jda;
 
-    public PandoraBot() throws LoginException, InterruptedException {
+    public PandoraBot() {
         manager = new ConfigManager();
         // Load in our global settings
         botConfig = manager.loadConfig("/data/settings", new BotSettings());
 
-        // Check if token is null
-        if (botConfig.getConfiguration().token == null) {
-            // first start
-            Scanner s = new Scanner(System.in);
-            System.out.print("Please input your bot token: ");
-            botConfig.getConfiguration().token = s.nextLine();
-            botConfig.saveConfig();
+        // Bot can not start until we have the correct token.
+        boolean successful = false;
+        // Infinite loop until token is correct.
+        while (!successful) {
+
+            if (botConfig.getConfiguration().token == null) {
+                // first start
+                Scanner s = new Scanner(System.in);
+                System.out.print("Please input your bot token: ");
+                botConfig.getConfiguration().token = s.nextLine();
+                botConfig.saveConfig();
+            }
+
+            // Build the JDA
+            JDABuilder builder = JDABuilder.createDefault(botConfig.getConfiguration().token);
+
+
+            CommandClientBuilder commandClientBuilder = new CommandClientBuilder();
+            commandClientBuilder.setPrefix(botConfig.getConfiguration().commandPrefix);
+            commandClientBuilder.setOwnerId("315146866268569601");
+            commandClientBuilder.setCoOwnerIds(botConfig.getConfiguration().admins);
+
+            builder.setActivity(Activity.playing("PandoraPvP"));
+            builder.setStatus(OnlineStatus.ONLINE);
+            builder.setAutoReconnect(true);
+
+            CommandClient client = commandClientBuilder.build();
+            builder.addEventListeners(client);
+            try {
+                jda = builder.build();
+                successful = true;
+            } catch (LoginException e) {
+                e.printStackTrace();
+            }
         }
-
-        // Build the JDA
-        JDABuilder builder = JDABuilder.createDefault(botConfig.getConfiguration().token);
-
-
-        CommandClientBuilder commandClientBuilder = new CommandClientBuilder();
-        commandClientBuilder.setPrefix(botConfig.getConfiguration().commandPrefix);
-        commandClientBuilder.setOwnerId("315146866268569601");
-        commandClientBuilder.setCoOwnerIds(botConfig.getConfiguration().admins);
-
-        builder.setActivity(Activity.playing("PandoraPvP"));
-        builder.setStatus(OnlineStatus.ONLINE);
-        builder.setAutoReconnect(true);
-
-        CommandClient client = commandClientBuilder.build();
-        builder.addEventListeners(client);
-
-        jda = builder.build();
-        jda.awaitReady();
     }
 
-    public static void main(String[] args) throws LoginException, InterruptedException {
+    public static void main(String[] args) {
         new PandoraBot();
     }
 
