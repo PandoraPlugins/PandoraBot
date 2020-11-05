@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
 
 import javax.security.auth.login.LoginException;
 import java.util.Scanner;
@@ -51,7 +52,8 @@ public class PandoraBot {
 
             // Build the JDA
             JDABuilder builder = JDABuilder.createDefault(botConfig.getConfiguration().token)
-                    .enableIntents(GatewayIntent.GUILD_MEMBERS);
+                    .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_PRESENCES);
+            builder.setMemberCachePolicy(MemberCachePolicy.ONLINE);
 
 
             // JDA-Utilities stuff

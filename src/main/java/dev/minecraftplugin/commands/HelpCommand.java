@@ -38,14 +38,16 @@ public class HelpCommand implements Consumer<CommandEvent> {
 
         Command.Category category = null;
         for (Command command : commands) {
-            if (!command.isHidden() && (!command.isOwnerCommand() || event.isOwner())) {
+            if (!command.isHidden() && ((category != null ? category.test(event) : !command.isOwnerCommand()) /*|| event.isOwner()*/)) {
                 if (!Objects.equals(category, command.getCategory())) {
                     category = command.getCategory();
-                    builder.append("\n\n  __").append(category == null ? "No Category" : category.getName()).append("__:\n");
+                    if (category == null || category.test(event))
+                        builder.append("\n\n  __").append(category == null ? "No Category" : category.getName()).append("__:\n");
                 }
-                builder.append("\n`").append(event.getClient().getTextualPrefix()).append(event.getClient().getPrefix() == null ? " " : "").append(command.getName())
-                        .append(command.getArguments() == null ? "`" : " " + command.getArguments() + "`")
-                        .append(" - ").append(command.getHelp());
+                if (category == null || category.test(event))
+                    builder.append("\n`").append(event.getClient().getTextualPrefix()).append(event.getClient().getPrefix() == null ? " " : "").append(command.getName())
+                            .append(command.getArguments() == null ? "`" : " " + command.getArguments() + "`")
+                            .append(" - ").append(command.getHelp());
             }
         }
         return builder.toString();
