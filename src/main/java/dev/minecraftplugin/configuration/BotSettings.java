@@ -12,4 +12,8 @@ public class BotSettings {
 
     public String joinMessageChannel = "751968755999047730";
     public String leaveMessageChannel = "";
+
+    public String joinMessageColor = "#09090a";
+
+    public String administrativeRole = "Administrator";
 }

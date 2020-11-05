@@ -2,9 +2,15 @@ package dev.minecraftplugin.commands;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import dev.minecraftplugin.PandoraBot;
 
 public class ShutdownCommand extends Command {
-    public ShutdownCommand() {
+    private final PandoraBot pandoraBot;
+
+    public ShutdownCommand(PandoraBot pandoraBot, Category category)
+    {
+        this.category = category;
+        this.pandoraBot = pandoraBot;
         this.name = "shutdown";
         this.help = "Bot go brrrrrr";
         this.guildOnly = false;
@@ -21,7 +27,8 @@ public class ShutdownCommand extends Command {
      */
     @Override
     protected void execute(CommandEvent event) {
-        event.replySuccess("Shutting down!");
+        event.reactSuccess();
+        pandoraBot.getBotConfig().saveConfig();
         event.getJDA().shutdown();
         System.exit(0);
     }

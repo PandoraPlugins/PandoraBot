@@ -3,6 +3,7 @@ package dev.minecraftplugin.listener;
 import com.sun.media.jfxmedia.logging.Logger;
 import dev.minecraftplugin.configuration.BotSettings;
 import dev.minecraftplugin.lib.config.Config;
+import dev.minecraftplugin.lib.util.Color;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
@@ -35,6 +36,7 @@ public class WelcomeQuitListener extends ListenerAdapter {
                         .setTimestamp(Instant.now())
                         .setDescription("**IP:** play.pandorapvp.co\n**Members:** " + event.getGuild().getMemberCount() + "\n\n\n\n")
                         .setThumbnail(event.getUser().getEffectiveAvatarUrl())
+                        .setColor(Color.color(config.getConfiguration().joinMessageColor))
                         .build()).queue();
     }
 

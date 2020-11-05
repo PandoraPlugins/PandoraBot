@@ -4,10 +4,10 @@ import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import dev.minecraftplugin.configuration.BotSettings;
 import dev.minecraftplugin.lib.config.Config;
+import dev.minecraftplugin.lib.util.Color;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.ChannelType;
 
-import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -26,7 +26,7 @@ public class HelpCommand implements Consumer<CommandEvent> {
         commandEvent.replyInDm(new EmbedBuilder()
                 .setAuthor("PandoraPVP", "https://discord.gg/ERgVCjw", commandEvent.getSelfUser().getEffectiveAvatarUrl())
                 .setFooter("Help Message")
-                .setColor(Color.decode(String.valueOf(Integer.parseInt(config.getConfiguration().helpColor.replace("#", ""), 16))))
+                .setColor(Color.color(config.getConfiguration().helpColor))
                 .setDescription(formatCommands(commandEvent.getClient().getCommands(), commandEvent))
                 .build(), success -> {
         }, fail -> commandEvent.replyWarning("Could not send you help because you are blocking Direct Messages."));

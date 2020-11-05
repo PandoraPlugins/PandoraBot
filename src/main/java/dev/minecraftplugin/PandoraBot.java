@@ -1,15 +1,16 @@
 package dev.minecraftplugin;
 
+import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.minecraftplugin.commands.HelpCommand;
 import dev.minecraftplugin.commands.PingCommand;
 import dev.minecraftplugin.commands.ShutdownCommand;
+import dev.minecraftplugin.commands.category.AdministrativeCategory;
 import dev.minecraftplugin.configuration.BotSettings;
 import dev.minecraftplugin.lib.config.Config;
 import dev.minecraftplugin.lib.config.ConfigManager;
 import dev.minecraftplugin.listener.WelcomeQuitListener;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -21,7 +22,14 @@ import java.util.Scanner;
 public class PandoraBot {
     private final ConfigManager manager;
     private final Config<BotSettings> botConfig;
-    private JDA jda;
+
+    public Config<BotSettings> getBotConfig() {
+        return botConfig;
+    }
+
+    public ConfigManager getManager() {
+        return manager;
+    }
 
     public PandoraBot() throws InterruptedException {
         manager = new ConfigManager();
@@ -52,7 +60,7 @@ public class PandoraBot {
             setupBuilder(commandClientBuilder);
 
             // Setting the bots discord status
-            commandClientBuilder.setActivity(Activity.playing("PandoraPvP"));
+            commandClientBuilder.setActivity(Activity.playing("PandoraPvP | !help"));
             commandClientBuilder.setStatus(OnlineStatus.ONLINE);
 
             // Setting the bot to auto reconnect if it gets disconnected
@@ -66,7 +74,7 @@ public class PandoraBot {
             try {
                 // We try and connect, if it throws an login error there was something wrong with token and as such
                 // We try again.
-                jda = builder.build();
+                builder.build();
                 successful = true;
             } catch (LoginException e) {
                 e.printStackTrace();
@@ -90,9 +98,12 @@ public class PandoraBot {
 
         builder.useHelpBuilder(true);
         builder.setHelpConsumer(new HelpCommand(botConfig));
+
+        Command.Category admin = new AdministrativeCategory("<a:bad:773731817420750898> You do not have permission to use this command!", botConfig);
+
         builder.addCommands(
-                new PingCommand(),
-                new ShutdownCommand());
+                new PingCommand(admin),
+                new ShutdownCommand(this, admin));
     }
 
     private void addListener(JDABuilder builder) {

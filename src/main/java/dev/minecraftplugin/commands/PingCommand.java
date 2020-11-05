@@ -8,7 +8,8 @@ import net.dv8tion.jda.api.entities.ChannelType;
 import java.time.temporal.ChronoUnit;
 
 public class PingCommand extends Command {
-    public PingCommand() {
+    public PingCommand(Category category) {
+        this.category = category;
         this.name = "ping";
         this.help = "Check bot ping!";
         this.guildOnly = false;
