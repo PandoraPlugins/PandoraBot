@@ -3,13 +3,17 @@ package dev.minecraftplugin;
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.minecraftplugin.commands.HelpCommand;
+import dev.minecraftplugin.commands.PingCommand;
+import dev.minecraftplugin.commands.ShutdownCommand;
 import dev.minecraftplugin.configuration.BotSettings;
 import dev.minecraftplugin.lib.config.Config;
 import dev.minecraftplugin.lib.config.ConfigManager;
+import dev.minecraftplugin.listener.WelcomeQuitListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import javax.security.auth.login.LoginException;
 import java.util.Scanner;
@@ -38,19 +42,14 @@ public class PandoraBot {
             }
 
             // Build the JDA
-            JDABuilder builder = JDABuilder.createDefault(botConfig.getConfiguration().token);
+            JDABuilder builder = JDABuilder.createDefault(botConfig.getConfiguration().token)
+                    .enableIntents(GatewayIntent.GUILD_MEMBERS);
 
 
             // JDA-Utilities stuff
             CommandClientBuilder commandClientBuilder = new CommandClientBuilder();
-            commandClientBuilder.setPrefix(botConfig.getConfiguration().commandPrefix);
-            commandClientBuilder.setOwnerId("315146866268569601");
-            commandClientBuilder.setCoOwnerIds(botConfig.getConfiguration().admins);
 
-
-            // Setting the help command.
-            commandClientBuilder.useHelpBuilder(true);
-            commandClientBuilder.setHelpConsumer(new HelpCommand(botConfig));
+            setupBuilder(commandClientBuilder);
 
             // Setting the bots discord status
             commandClientBuilder.setActivity(Activity.playing("PandoraPvP"));
@@ -62,6 +61,8 @@ public class PandoraBot {
             // This is where we add the JDA-Utilities stuff to jda itself.
             CommandClient client = commandClientBuilder.build();
             builder.addEventListeners(client);
+
+            addListener(builder);
             try {
                 // We try and connect, if it throws an login error there was something wrong with token and as such
                 // We try again.
@@ -80,19 +81,25 @@ public class PandoraBot {
         }
     }
 
+    private void setupBuilder(CommandClientBuilder builder) {
+        builder.setEmojis("<a:good:773731817248653323>", "<a:medium:773731817718677576>", "<a:bad:773731817420750898>");
+
+        builder.setPrefix(botConfig.getConfiguration().commandPrefix);
+        builder.setOwnerId("315146866268569601");
+        builder.setCoOwnerIds(botConfig.getConfiguration().admins);
+
+        builder.useHelpBuilder(true);
+        builder.setHelpConsumer(new HelpCommand(botConfig));
+        builder.addCommands(
+                new PingCommand(),
+                new ShutdownCommand());
+    }
+
+    private void addListener(JDABuilder builder) {
+        builder.addEventListeners(new WelcomeQuitListener(botConfig));
+    }
+
     public static void main(String[] args) throws InterruptedException {
         new PandoraBot();
-    }
-
-    public ConfigManager getManager() {
-        return manager;
-    }
-
-    public Config<BotSettings> getBotConfig() {
-        return botConfig;
-    }
-
-    public JDA getJda() {
-        return jda;
     }
 }

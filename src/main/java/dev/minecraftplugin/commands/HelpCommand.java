@@ -5,9 +5,11 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import dev.minecraftplugin.configuration.BotSettings;
 import dev.minecraftplugin.lib.config.Config;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.ChannelType;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class HelpCommand implements Consumer<CommandEvent> {
@@ -19,17 +21,33 @@ public class HelpCommand implements Consumer<CommandEvent> {
 
     @Override
     public void accept(CommandEvent commandEvent) {
-        commandEvent.getMessage().delete().queue();
+        if (commandEvent.isFromType(ChannelType.TEXT))
+            commandEvent.getMessage().delete().queue();
         commandEvent.replyInDm(new EmbedBuilder()
-                .setAuthor("PandoraPVP", "", commandEvent.getSelfUser().getEffectiveAvatarUrl())
+                .setAuthor("PandoraPVP", "https://discord.gg/ERgVCjw", commandEvent.getSelfUser().getEffectiveAvatarUrl())
                 .setFooter("Help Message")
-                .setColor(Color.decode(config.getConfiguration().helpColor.replace("#", "")))
-                .setDescription(formatCommands(commandEvent.getClient().getCommands()))
-                .build());
+                .setColor(Color.decode(String.valueOf(Integer.parseInt(config.getConfiguration().helpColor.replace("#", ""), 16))))
+                .setDescription(formatCommands(commandEvent.getClient().getCommands(), commandEvent))
+                .build(), success -> {
+        }, fail -> commandEvent.replyWarning("Could not send you help because you are blocking Direct Messages."));
     }
 
-    private String formatCommands(List<Command> commandList) {
-        // todo: do this
-        return "Work In Progress (Please try again later)";
+    private String formatCommands(List<Command> commands, CommandEvent event) {
+        StringBuilder builder = new StringBuilder();
+
+
+        Command.Category category = null;
+        for (Command command : commands) {
+            if (!command.isHidden() && (!command.isOwnerCommand() || event.isOwner())) {
+                if (!Objects.equals(category, command.getCategory())) {
+                    category = command.getCategory();
+                    builder.append("\n\n  __").append(category == null ? "No Category" : category.getName()).append("__:\n");
+                }
+                builder.append("\n`").append(event.getClient().getTextualPrefix()).append(event.getClient().getPrefix() == null ? " " : "").append(command.getName())
+                        .append(command.getArguments() == null ? "`" : " " + command.getArguments() + "`")
+                        .append(" - ").append(command.getHelp());
+            }
+        }
+        return builder.toString();
     }
 }

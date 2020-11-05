@@ -9,4 +9,7 @@ public class BotSettings {
 
     // Command Settings
     public String helpColor = "#f04747";
+
+    public String joinMessageChannel = "751968755999047730";
+    public String leaveMessageChannel = "";
 }
