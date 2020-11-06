@@ -29,7 +29,6 @@ public class AdministrativeCategory extends Command.Category {
                 return false;
             }
             Member m = pandora.getMember(commandEvent.getAuthor());
-            System.out.println(pandora.getMembers());
             if (m == null) {
                 m = pandora.retrieveMember(commandEvent.getAuthor()).complete();
             }
