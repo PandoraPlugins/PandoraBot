@@ -24,7 +24,7 @@ public class HelpCommand implements Consumer<CommandEvent> {
         if (commandEvent.isFromType(ChannelType.TEXT))
             commandEvent.getMessage().delete().queue();
         commandEvent.replyInDm(new EmbedBuilder()
-                .setAuthor("PandoraPVP", "https://discord.gg/ERgVCjw", commandEvent.getSelfUser().getEffectiveAvatarUrl())
+                .setAuthor("PandoraPVP", config.getConfiguration().discordInvite, commandEvent.getSelfUser().getEffectiveAvatarUrl())
                 .setFooter("Help Message")
                 .setColor(Color.color(config.getConfiguration().helpColor))
                 .setDescription(formatCommands(commandEvent.getClient().getCommands(), commandEvent))
@@ -38,7 +38,7 @@ public class HelpCommand implements Consumer<CommandEvent> {
 
         Command.Category category = null;
         for (Command command : commands) {
-            if (!command.isHidden() && ((category != null ? category.test(event) : !command.isOwnerCommand()) /*|| event.isOwner()*/)) {
+            if (!command.isHidden() && ((category != null ? category.test(event) : !command.isOwnerCommand()) || event.isOwner())) {
                 if (!Objects.equals(category, command.getCategory())) {
                     category = command.getCategory();
                     if (category == null || category.test(event))

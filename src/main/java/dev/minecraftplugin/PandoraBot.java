@@ -6,11 +6,14 @@ import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import dev.minecraftplugin.commands.HelpCommand;
 import dev.minecraftplugin.commands.PingCommand;
 import dev.minecraftplugin.commands.ShutdownCommand;
+import dev.minecraftplugin.commands.announce.AnnounceCommand;
 import dev.minecraftplugin.commands.category.AdministrativeCategory;
 import dev.minecraftplugin.configuration.BotSettings;
+import dev.minecraftplugin.dialogue.DialogueManager;
 import dev.minecraftplugin.lib.config.Config;
 import dev.minecraftplugin.lib.config.ConfigManager;
 import dev.minecraftplugin.listener.WelcomeQuitListener;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -21,21 +24,29 @@ import javax.security.auth.login.LoginException;
 import java.util.Scanner;
 
 public class PandoraBot {
-    private final ConfigManager manager;
+    private final ConfigManager configManager;
     private final Config<BotSettings> botConfig;
+    private final DialogueManager dialogueManager;
+    private JDA jda;
 
-    public Config<BotSettings> getBotConfig() {
-        return botConfig;
-    }
-
-    public ConfigManager getManager() {
-        return manager;
+    public JDA getJda() {
+        return jda;
     }
 
     public PandoraBot() throws InterruptedException {
-        manager = new ConfigManager();
+        configManager = new ConfigManager();
+        dialogueManager = new DialogueManager(this);
         // Load in our global settings
-        botConfig = manager.loadConfig("/data/settings", new BotSettings());
+        botConfig = configManager.loadConfig("/data/settings", new BotSettings());
+
+        // JDA-Utilities stuff
+        CommandClientBuilder commandClientBuilder = new CommandClientBuilder();
+
+        setupBuilder(commandClientBuilder);
+
+        // Setting the bots discord status
+        commandClientBuilder.setActivity(Activity.playing(botConfig.getConfiguration().status));
+        commandClientBuilder.setStatus(OnlineStatus.ONLINE);
 
         // Bot can not start until we have the correct token.
         boolean successful = false;
@@ -47,23 +58,12 @@ public class PandoraBot {
                 Scanner s = new Scanner(System.in);
                 System.out.print("Please input your bot token: ");
                 botConfig.getConfiguration().token = s.nextLine();
-                botConfig.saveConfig();
             }
 
             // Build the JDA
             JDABuilder builder = JDABuilder.createDefault(botConfig.getConfiguration().token)
                     .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_PRESENCES);
             builder.setMemberCachePolicy(MemberCachePolicy.ONLINE);
-
-
-            // JDA-Utilities stuff
-            CommandClientBuilder commandClientBuilder = new CommandClientBuilder();
-
-            setupBuilder(commandClientBuilder);
-
-            // Setting the bots discord status
-            commandClientBuilder.setActivity(Activity.playing("PandoraPvP | !help"));
-            commandClientBuilder.setStatus(OnlineStatus.ONLINE);
 
             // Setting the bot to auto reconnect if it gets disconnected
             builder.setAutoReconnect(true);
@@ -73,46 +73,62 @@ public class PandoraBot {
             builder.addEventListeners(client);
 
             addListener(builder);
+            builder.addEventListeners(dialogueManager);
             try {
                 // We try and connect, if it throws an login error there was something wrong with token and as such
                 // We try again.
-                builder.build();
+                jda = builder.build();
                 successful = true;
             } catch (LoginException e) {
                 e.printStackTrace();
                 // Means invalid token, we should null our token that was saved to allow for it to input another one.
                 if (e.getMessage().trim().equalsIgnoreCase("The provided token is invalid!")) {
                     botConfig.getConfiguration().token = null;
-                    botConfig.saveConfig();
                 }
                 // We sleep for 1 second before trying to login again
                 Thread.sleep(1000);
             }
         }
+        botConfig.saveConfig();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        new PandoraBot();
+    }
+
+    public Config<BotSettings> getBotConfig() {
+        return botConfig;
+    }
+
+    public ConfigManager getManager() {
+        return configManager;
+    }
+
+    public DialogueManager getDialogueManager() {
+        return dialogueManager;
     }
 
     private void setupBuilder(CommandClientBuilder builder) {
-        builder.setEmojis("<a:good:773731817248653323>", "<a:medium:773731817718677576>", "<a:bad:773731817420750898>");
+        String[] emojis = botConfig.getConfiguration().emojis;
+        builder.setEmojis(emojis[0], emojis[1], emojis[2]);
 
         builder.setPrefix(botConfig.getConfiguration().commandPrefix);
-        builder.setOwnerId("315146866268569601");
+        builder.setAlternativePrefix(botConfig.getConfiguration().alternativeCommandPrefix);
+        builder.setOwnerId(botConfig.getConfiguration().ownerID);
         builder.setCoOwnerIds(botConfig.getConfiguration().admins);
 
         builder.useHelpBuilder(true);
         builder.setHelpConsumer(new HelpCommand(botConfig));
 
-        Command.Category admin = new AdministrativeCategory("<a:bad:773731817420750898> You do not have permission to use this command!", botConfig);
+        Command.Category admin = new AdministrativeCategory(emojis[2] + " You do not have permission to use this command!", botConfig);
 
         builder.addCommands(
                 new PingCommand(admin),
+                new AnnounceCommand(this, admin),
                 new ShutdownCommand(this, admin));
     }
 
     private void addListener(JDABuilder builder) {
         builder.addEventListeners(new WelcomeQuitListener(botConfig));
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        new PandoraBot();
     }
 }

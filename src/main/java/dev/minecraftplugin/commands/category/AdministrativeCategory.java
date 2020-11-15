@@ -23,7 +23,7 @@ public class AdministrativeCategory extends Command.Category {
         return commandEvent -> {
             if (commandEvent.isOwner())
                 return true;
-            Guild pandora = commandEvent.getJDA().getGuildById("727632535185785012");
+            Guild pandora = commandEvent.getJDA().getGuildById(config.getConfiguration().guildID);
             if (pandora == null) {
                 Logger.logMsg(Logger.ERROR, "Could not find pandora discord! Was I kicked?");
                 return false;

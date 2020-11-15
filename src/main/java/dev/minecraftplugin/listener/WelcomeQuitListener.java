@@ -5,6 +5,7 @@ import dev.minecraftplugin.configuration.BotSettings;
 import dev.minecraftplugin.lib.config.Config;
 import dev.minecraftplugin.lib.util.Color;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
@@ -31,13 +32,17 @@ public class WelcomeQuitListener extends ListenerAdapter {
         channel.sendMessage(
                 new EmbedBuilder()
                         .setTitle(event.getUser().getName())
-                        .setAuthor("Welcome to PandoraPvP", "https://discord.gg/ERgVCjw", event.getGuild().getIconUrl())
+                        .setAuthor("Welcome to PandoraPvP", config.getConfiguration().discordInvite, event.getGuild().getIconUrl())
                         .setFooter("PandoraPvP")
                         .setTimestamp(Instant.now())
                         .setDescription("**IP:** play.pandorapvp.co\n**Members:** " + event.getGuild().getMemberCount() + "\n\n\n\n")
                         .setThumbnail(event.getUser().getEffectiveAvatarUrl())
                         .setColor(Color.color(config.getConfiguration().joinMessageColor))
                         .build()).queue();
+        Role role = event.getJDA().getRoleById(config.getConfiguration().joinRole);
+        if (role != null) {
+            event.getGuild().addRoleToMember(event.getMember(), role).queue();
+        }
     }
 
     @Override
